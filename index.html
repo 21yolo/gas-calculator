@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ethereum Gas Calculator</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,19 +13,21 @@
 </head>
 <body>
     <header>
-        <div class="eth-price-container">
-            <div class="eth-price">
-                <img src="https://i.postimg.cc/zBP0mwVW/icons8-gas-station-64.png" alt="Gas" class="price-icon gwei-icon">
-                <span id="gas-gwei">-- Gwei</span>
-                <span class="separator">|</span>
-                <img src="https://i.postimg.cc/4dhhdpWp/icons8-ethereum-64.png" alt="ETH" class="price-icon eth-icon">
-                <span id="eth-price">-- USD</span>
+        <div class="price-container">
+            <div class="gas-price-box">
+                <img src="https://i.postimg.cc/zBP0mwVW/icons8-gas-station-64.png" alt="Gas" class="price-icon">
+                <span id="gas-gwei">1.62</span>
+                <span>Gwei</span>
+            </div>
+            <div class="eth-price-box">
+                <img src="https://i.postimg.cc/4dhhdpWp/icons8-ethereum-64.png" alt="ETH" class="price-icon">
+                <span id="eth-price">1550</span>
             </div>
         </div>
-        <h1><span class="subtitle">Ethereum Gas Calculator</span></h1>
+        <h1>Ethereum Gas Calculator</h1>
         <div class="spacer"></div>
     </header>
-    
+
     <main>
         <div class="calculator-container">
             <div class="input-section">
@@ -56,7 +57,7 @@
                     
                     <div class="input-group">
                         <label for="gas-step">Gas Step (GWEI)</label>
-                        <input type="number" id="gas-step" value="25" step="5" min="1">
+                        <input type="number" id="gas-step" value="15" step="5" min="1">
                     </div>
                     
                     <div class="input-group">

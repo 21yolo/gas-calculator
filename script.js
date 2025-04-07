@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const calculateBtn = document.getElementById('calculate-btn');
     const resultsContent = document.getElementById('results-content');
     const ethPriceElement = document.getElementById('eth-price');
-    const ethChangeElement = document.getElementById('eth-change');
     const gasGweiElement = document.getElementById('gas-gwei');
 
     // Variables
@@ -25,58 +24,51 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set default values for advanced mode
             gasStartInput.value = 10;
             gasStepInput.value = 15;
-            numRowsInput.value = 50;
+            numRowsInput.value = 15;
         } else {
             advancedSettings.classList.add('hidden');
             advancedSettings.classList.remove('show');
         }
     });
 
-    // Fetch ETH Price and Gas Price
-    async function fetchEthData() {
+    // Fetch ETH Price from Etherscan
+    async function fetchEthPrice() {
         try {
-            // Fetch ETH price data
-            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true');
+            const response = await fetch('https://api.etherscan.io/api?module=stats&action=ethprice&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM');
             const data = await response.json();
             
-            if (data && data.ethereum) {
-                ethPrice = data.ethereum.usd;
-                const change24h = data.ethereum.usd_24h_change;
+            if (data && data.status === "1" && data.result) {
+                ethPrice = parseFloat(data.result.ethusd);
                 
-                // Update the UI
-                ethPriceElement.textContent = `${ethPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                
-                const changeText = change24h.toFixed(2);
-                ethChangeElement.textContent = `(${changeText}%) 24h`;
-                
-                if (change24h >= 0) {
-                    ethChangeElement.classList.add('price-up');
-                    ethChangeElement.classList.remove('price-down');
-                } else {
-                    ethChangeElement.classList.add('price-down');
-                    ethChangeElement.classList.remove('price-up');
-                }
+                // Update the UI with integer format
+                ethPriceElement.textContent = `${Math.round(ethPrice)}`;
             }
-            
-            // Fetch current gas price (using Etherscan API)
+        } catch (error) {
+            console.error('Error fetching ETH price:', error);
+            // Set fallback value
+            ethPrice = 1550;
+            ethPriceElement.textContent = `${ethPrice}`;
+        }
+    }
+    
+    // Fetch Gas Price from Etherscan
+    async function fetchGasPrice() {
+        try {
             const gasResponse = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM');
             const gasData = await gasResponse.json();
             
-            if (gasData && gasData.result) {
+            if (gasData && gasData.status === "1" && gasData.result) {
                 currentGasPrice = parseFloat(gasData.result.SafeGasPrice);
-                gasGweiElement.textContent = `${currentGasPrice.toFixed(2)} Gwei`;
+                
+                // Update the UI with X.XX format
+                gasGweiElement.textContent = `${currentGasPrice.toFixed(2)}`;
             }
         } catch (error) {
-            console.error('Error fetching data:', error);
-            // Set fallback values
-            ethPrice = 1600;
-            currentGasPrice = 2;
-            ethPriceElement.textContent = `${ethPrice}`;
-            gasGweiElement.textContent = `${currentGasPrice.toFixed(2)} Gwei`;
+            console.error('Error fetching gas price:', error);
+            // Set fallback value
+            currentGasPrice = 1.62;
+            gasGweiElement.textContent = `${currentGasPrice.toFixed(2)}`;
         }
-        
-        // Initial calculation
-        calculateGasFees();
     }
 
     // Calculate Gas Fees
@@ -105,11 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Use custom step pattern for default mode
             gasPrices.push(5);  // First value: 5 GWEI
             gasPrices.push(15); // Second value: 15 GWEI
+            gasPrices.push(25); // Third value: 25 GWEI
             
-            // Start the pattern from 25 GWEI with 25 steps
-            const step = 25;
-            for (let i = 0; i < numRows - 2; i++) {
-                gasPrices.push(25 + (i * step));
+            // Continue with 25 increments
+            for (let i = 1; i < numRows - 3; i++) {
+                gasPrices.push(25 + (i * 25));
             }
         }
         
@@ -128,17 +120,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             row.innerHTML = `
                 <div class="result-item">
-                    <span class="gwei-value">${gasPrice} GWEI</span>
+                    <span class="gwei-badge">${gasPrice} GWEI</span>
                 </div>
                 <div class="result-item">
-                    <div>
-                        <span class="eth-value">Transaction: ${totalCostEth.toFixed(6)} ETH</span>
-                        <span class="usd-value">${usdValue.toFixed(2)}</span>
-                    </div>
-                    <div style="margin-top: 8px;">
-                        <span class="eth-value">Balance needed: ${balanceNeeded.toFixed(6)} ETH</span>
-                        <span class="usd-value">${(balanceNeeded * ethPrice).toFixed(2)}</span>
-                    </div>
+                    <span>${totalCostEth.toFixed(5)} ETH</span>
+                </div>
+                <div class="result-item">
+                    <span>${balanceNeeded.toFixed(5)} ETH</span>
+                </div>
+                <div class="result-item">
+                    <span>$${usdValue.toFixed(2)}</span>
                 </div>
             `;
             
@@ -146,12 +137,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Event listeners
+    // Initialize
+    function init() {
+        // Initial fetch
+        fetchEthPrice();
+        fetchGasPrice();
+        
+        // Set up interval for updates
+        setInterval(fetchEthPrice, 60000); // Update ETH price every minute
+        setInterval(fetchGasPrice, 15000); // Update gas price every 15 seconds
+    }
+
+    // Event listeners - Only calculate when button is clicked
     calculateBtn.addEventListener('click', calculateGasFees);
     
-    // Initialize
-    fetchEthData();
-    
-    // Update ETH price every 60 seconds
-    setInterval(fetchEthData, 60000);
+    // Start the app
+    init();
 });
