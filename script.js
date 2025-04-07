@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error fetching ETH price:', error);
             // Set fallback value
-            ethPrice = 1550;
+            ethPrice = 0;
             ethPriceElement.textContent = `${ethPrice}`;
         }
     }
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error fetching gas price:', error);
             // Set fallback value
-            currentGasPrice = 1.62;
+            currentGasPrice = 0;
             gasGweiElement.textContent = `${currentGasPrice.toFixed(2)}`;
         }
     }
