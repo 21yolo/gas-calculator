@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethereum Gas Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCI+PHBhdGggZmlsbD0iIzYyN0VFQSIgZD0iTTYzLjk5NiAwaC0uMTEzYy0yMS43IDAtNDEuMzQgMTMuMjk1LTQ5LjM0OSAzMy41NjgtOCA2LjM2OC0xMy45MzggMTQuODUgMTMuOTM4IDI0LjA2MmEzLjU4IDMuNTggMCAwIDEgMS4wNDQgMi41M2MwIC4wMDkgNiAyLjA1OSA2IDIuMDU5TDYzLjQxMiA4LjEzNHYuMDAxbC0uMDE0LS4wMDQuMDE0LjAwM1YuMDFsLjU4NC0uMDFoLjAwMXoiLz48cGF0aCBmaWxsPSIjNjI3RUVBIiBkPSJNNjQuMDIxIDB2NC44OTNsLS4wMDIuMDAxLS4wNDIgMTQuMjczLS4wMzMgMTAuODM4LS4wOTQgMTguNDcxLS4wNSA5LjUxOS0uMDE2IDMuMDRWMTMwbC42MzMuMDJjMzYuNzM0LS41OSA2NS42OS0zMC45OTYgNjUuNjktNjcuODA4QzEzMC4xMDYgMjguMDEgMTAwLjEyNiAwIDYzLjk5NSAwaDLigbUuMDI2eiIvPjxwYXRoIGZpbGw9IiNGRkY7IG9wYWNpdHk6MC44IiBkPSJNNjMuNDQyIDM4LjE1bC00NC40MTUgMjAuMDg2IDQ0LjQxNSAyNi4zMjF2LTQ2LjQwN3oiLz48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNjMuNDk4IDg0LjU1NnYtNDYuNDA2bDQ0LjA5MSAyMC4wODYtNDQuMDkxIDI2LjMyeiIvPjxwYXRoIGZpbGw9IiNGRkY7IG9wYWNpdHk6MC44IiBkPSJNNjMuNDQyIDkwLjcxOUwxOS4wMjMgNjQuMjc4bDQ0LjQxOSAyMC41NDh2LTEuMDY3eiIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik02My40OTggODMuNzU5djMwLjk1Nkw1MDcuNjE5IDY0LjI3OHoiLz48L3N2Zz4=">
+</head>
+<body>
+    <header>
+        <div class="eth-price-container">
+            <div class="eth-price">
+                <img src="https://i.postimg.cc/zBP0mwVW/icons8-gas-station-64.png" alt="Gas" class="price-icon gwei-icon">
+                <span id="gas-gwei">-- Gwei</span>
+                <span class="separator">|</span>
+                <img src="https://i.postimg.cc/4dhhdpWp/icons8-ethereum-64.png" alt="ETH" class="price-icon eth-icon">
+                <span id="eth-price">-- USD</span>
+            </div>
+        </div>
+        <h1><span class="subtitle">Ethereum Gas Calculator</span></h1>
+        <div class="spacer"></div>
+    </header>
+    
+    <main>
+        <div class="calculator-container">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="mint-price">Combined Mint Price (ETH)</label>
+                    <input type="number" id="mint-price" value="0" step="0.01" min="0">
+                </div>
+                
+                <div class="input-group">
+                    <label for="gas-limit">Gas Limit</label>
+                    <input type="number" id="gas-limit" value="250000" step="1000" min="21000">
+                </div>
+                
+                <div class="advanced-toggle">
+                    <label class="switch">
+                        <input type="checkbox" id="advanced-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Advanced Settings</span>
+                </div>
+                
+                <div id="advanced-settings" class="hidden">
+                    <div class="input-group">
+                        <label for="gas-start">Starting Gas (GWEI)</label>
+                        <input type="number" id="gas-start" value="10" step="5" min="1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="gas-step">Gas Step (GWEI)</label>
+                        <input type="number" id="gas-step" value="25" step="5" min="1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="num-rows">Number Of Rows</label>
+                        <input type="number" id="num-rows" value="15" step="1" min="5" max="30">
+                    </div>
+                </div>
+                
+                <button id="calculate-btn">Calculate</button>
+            </div>
+            
+            <div class="results-section">
+                <div class="results-header">
+                    <div class="results-header-item">Gas Price</div>
+                    <div class="results-header-item">Transaction Cost</div>
+                    <div class="results-header-item">Balance Needed</div>
+                    <div class="results-header-item">USD Value</div>
+                </div>
+                
+                <div id="results-content">
+                    <!-- Results will be dynamically inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>Created by <a href="https://x.com/y0Lo_21" target="_blank">yOLo21.eth</a></p>
+        <p class="disclaimer">This calculator is for estimation purposes only. Actual gas fees may vary.</p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
