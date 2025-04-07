@@ -12,9 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const ethPriceElement = document.getElementById('eth-price');
     const gasGweiElement = document.getElementById('gas-gwei');
 
-    // Variables
+    // Variables - start with zero values
     let ethPrice = 0;
     let currentGasPrice = 0;
+    
+    // Initialize display with dashes until real data loads
+    ethPriceElement.textContent = "--";
+    gasGweiElement.textContent = "--";
 
     // Toggle Advanced Settings
     advancedToggle.addEventListener('change', () => {
@@ -45,9 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error fetching ETH price:', error);
-            // Set fallback value
+            // Set fallback value but keep display as dashes
             ethPrice = 0;
-            ethPriceElement.textContent = `${ethPrice}`;
         }
     }
     
@@ -65,14 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error fetching gas price:', error);
-            // Set fallback value
+            // Set fallback value but keep display as dashes
             currentGasPrice = 0;
-            gasGweiElement.textContent = `${currentGasPrice.toFixed(2)}`;
         }
     }
 
     // Calculate Gas Fees
     function calculateGasFees() {
+        // Don't calculate if we don't have ETH price data yet
+        if (ethPrice <= 0) {
+            alert("Waiting for current ETH price data. Please try again in a moment.");
+            return;
+        }
+        
         // Get input values
         const mintPrice = parseFloat(mintPriceInput.value) || 0;
         const gasLimit = parseInt(gasLimitInput.value) || 21000;
