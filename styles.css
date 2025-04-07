@@ -134,6 +134,8 @@ input[type="number"]::-webkit-outer-spin-button {
     display: flex;
     align-items: center;
     margin-bottom: 1rem;
+    position: relative; /* Add this */
+    z-index: 1; /* Add this */
 }
 
 .advanced-toggle span {
@@ -146,6 +148,8 @@ input[type="number"]::-webkit-outer-spin-button {
     display: inline-block;
     width: 40px;
     height: 20px;
+    flex-shrink: 0; /* Add this to prevent shrinking */
+    overflow: visible; /* Add this */
 }
 
 .switch input {
@@ -214,6 +218,10 @@ button {
     cursor: pointer;
     transition: background-color 0.3s;
     font-weight: 500;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: 0.02em;
+    background: var(--button-color);
+    text-transform: none;
 }
 
 button:hover {
