@@ -79,6 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch 24h Price Change from CoinGecko (infrequently)
     async function fetchPriceChange() {
         try {
+            console.log('Fetching price change from CoinGecko...');
+            
             // Use the CoinGecko API with proper header authentication
             const options = {
                 method: 'GET',
@@ -98,9 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const data = await response.json();
+            console.log('CoinGecko response:', data);
             
             if (data && data.ethereum && data.ethereum.usd_24h_change !== undefined) {
                 ethPriceChange = data.ethereum.usd_24h_change;
+                console.log('24h price change:', ethPriceChange);
                 
                 // Update price change indicator
                 const isPositive = ethPriceChange >= 0;
