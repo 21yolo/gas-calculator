@@ -19,14 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let ethPriceChange = null;
     let gasGwei = null;
     
+    // Constants for API refresh rates (in milliseconds)
+    const GWEI_REFRESH_RATE = 10000; // 10 seconds
+    const ETH_PRICE_REFRESH_RATE = 30000; // 30 seconds
+    const PRICE_CHANGE_REFRESH_RATE = 900000; // 15 minutes
+    
     // Initialize
     function init() {
         // Initial fetch
-        fetchPrices();
+        fetchGasPrice();
+        fetchEthPrice();
+        fetchPriceChange();
         
-        // Set up intervals for refreshing data
-        setInterval(fetchGasPrice, 5000); // Every 5 seconds
-        setInterval(fetchEthPrice, 60000); // Every minute (to stay within CoinGecko limits)
+        // Set up intervals for refreshing data with different rates
+        setInterval(fetchGasPrice, GWEI_REFRESH_RATE);
+        setInterval(fetchEthPrice, ETH_PRICE_REFRESH_RATE);
+        setInterval(fetchPriceChange, PRICE_CHANGE_REFRESH_RATE);
         
         // Event listeners
         advancedToggle.addEventListener('change', toggleAdvancedSettings);
@@ -42,15 +50,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Fetch data from APIs
-    function fetchPrices() {
-        fetchEthPrice();
-        fetchGasPrice();
-    }
-    
-    // Fetch ETH Price from CoinGecko
+    // Fetch ETH Price from Etherscan
     async function fetchEthPrice() {
         try {
+            const response = await fetch(
+                'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM'
+            );
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data && data.status === "1" && data.result) {
+                ethPrice = parseFloat(data.result.ethusd);
+                
+                // Update the UI
+                ethPriceElement.textContent = Math.round(ethPrice);
+            } else {
+                console.error('Invalid response format from Etherscan ETH price:', data);
+            }
+        } catch (error) {
+            console.error('Error fetching ETH price from Etherscan:', error);
+        }
+    }
+    
+    // Fetch 24h Price Change from CoinGecko (infrequently)
+    async function fetchPriceChange() {
+        try {
+            // Use the CoinGecko API with proper header authentication
             const options = {
                 method: 'GET',
                 headers: {
@@ -60,29 +89,31 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             const response = await fetch(
-                'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24h_change=true', 
+                'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24h_change=true',
                 options
             );
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
-            if (data && data.ethereum) {
-                ethPrice = data.ethereum.usd;
+            if (data && data.ethereum && data.ethereum.usd_24h_change !== undefined) {
                 ethPriceChange = data.ethereum.usd_24h_change;
                 
-                // Update the UI
-                ethPriceElement.textContent = Math.round(ethPrice);
-                
                 // Update price change indicator
-                if (ethPriceChange !== null) {
-                    const isPositive = ethPriceChange >= 0;
-                    ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
-                    ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
-                    ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');
-                }
+                const isPositive = ethPriceChange >= 0;
+                ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
+                ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
+                ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');
+            } else {
+                console.error('Invalid response format from CoinGecko or missing 24h change:', data);
+                ethPriceChangeElement.classList.add('hidden');
             }
         } catch (error) {
-            console.error('Error fetching ETH price:', error);
+            console.error('Error fetching price change from CoinGecko:', error);
+            ethPriceChangeElement.classList.add('hidden');
         }
     }
     
@@ -93,6 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM'
             );
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (data && data.status === "1" && data.result) {
@@ -100,9 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update the UI
                 gasGweiElement.textContent = gasGwei.toFixed(2);
+            } else {
+                console.error('Invalid response format from Etherscan gas price:', data);
             }
         } catch (error) {
-            console.error('Error fetching gas price:', error);
+            console.error('Error fetching gas price from Etherscan:', error);
         }
     }
 
