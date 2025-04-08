@@ -8,75 +8,108 @@ document.addEventListener('DOMContentLoaded', () => {
     const gasStepInput = document.getElementById('gas-step');
     const numRowsInput = document.getElementById('num-rows');
     const calculateBtn = document.getElementById('calculate-btn');
+    const resultsCard = document.getElementById('results-card');
     const resultsContent = document.getElementById('results-content');
     const ethPriceElement = document.getElementById('eth-price');
     const gasGweiElement = document.getElementById('gas-gwei');
+    const ethPriceChangeElement = document.getElementById('eth-price-change');
 
-    // Variables - start with zero values
-    let ethPrice = 0;
-    let currentGasPrice = 0;
+    // Variables
+    let ethPrice = null;
+    let ethPriceChange = null;
+    let gasGwei = null;
     
-    // Initialize display with dashes until real data loads
-    ethPriceElement.textContent = "--";
-    gasGweiElement.textContent = "--";
-
+    // Initialize
+    function init() {
+        // Initial fetch
+        fetchPrices();
+        
+        // Set up intervals for refreshing data
+        setInterval(fetchGasPrice, 5000); // Every 5 seconds
+        setInterval(fetchEthPrice, 60000); // Every minute (to stay within CoinGecko limits)
+        
+        // Event listeners
+        advancedToggle.addEventListener('change', toggleAdvancedSettings);
+        calculateBtn.addEventListener('click', calculateGasFees);
+    }
+    
     // Toggle Advanced Settings
-    advancedToggle.addEventListener('change', () => {
+    function toggleAdvancedSettings() {
         if (advancedToggle.checked) {
             advancedSettings.classList.remove('hidden');
-            advancedSettings.classList.add('show');
-            // Set default values for advanced mode
-            gasStartInput.value = 10;
-            gasStepInput.value = 15;
-            numRowsInput.value = 15;
         } else {
             advancedSettings.classList.add('hidden');
-            advancedSettings.classList.remove('show');
         }
-    });
-
-    // Fetch ETH Price from Etherscan
+    }
+    
+    // Fetch data from APIs
+    function fetchPrices() {
+        fetchEthPrice();
+        fetchGasPrice();
+    }
+    
+    // Fetch ETH Price from CoinGecko
     async function fetchEthPrice() {
         try {
-            const response = await fetch('https://api.etherscan.io/api?module=stats&action=ethprice&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM');
+            const options = {
+                method: 'GET',
+                headers: {
+                    'accept': 'application/json', 
+                    'x-cg-demo-api-key': 'CG-VdN9BevdKrni5bPV6TE4WTxM'
+                }
+            };
+            
+            const response = await fetch(
+                'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24h_change=true', 
+                options
+            );
+            
             const data = await response.json();
             
-            if (data && data.status === "1" && data.result) {
-                ethPrice = parseFloat(data.result.ethusd);
+            if (data && data.ethereum) {
+                ethPrice = data.ethereum.usd;
+                ethPriceChange = data.ethereum.usd_24h_change;
                 
-                // Update the UI with integer format
-                ethPriceElement.textContent = `${Math.round(ethPrice)}`;
+                // Update the UI
+                ethPriceElement.textContent = Math.round(ethPrice);
+                
+                // Update price change indicator
+                if (ethPriceChange !== null) {
+                    const isPositive = ethPriceChange >= 0;
+                    ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
+                    ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
+                    ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');
+                }
             }
         } catch (error) {
             console.error('Error fetching ETH price:', error);
-            // Set fallback value but keep display as dashes
-            ethPrice = 0;
         }
     }
     
     // Fetch Gas Price from Etherscan
     async function fetchGasPrice() {
         try {
-            const gasResponse = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM');
-            const gasData = await gasResponse.json();
+            const response = await fetch(
+                'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM'
+            );
             
-            if (gasData && gasData.status === "1" && gasData.result) {
-                currentGasPrice = parseFloat(gasData.result.SafeGasPrice);
+            const data = await response.json();
+            
+            if (data && data.status === "1" && data.result) {
+                gasGwei = parseFloat(data.result.SafeGasPrice);
                 
-                // Update the UI with X.XX format
-                gasGweiElement.textContent = `${currentGasPrice.toFixed(2)}`;
+                // Update the UI
+                gasGweiElement.textContent = gasGwei.toFixed(2);
             }
         } catch (error) {
             console.error('Error fetching gas price:', error);
-            // Set fallback value but keep display as dashes
-            currentGasPrice = 0;
         }
     }
 
     // Calculate Gas Fees
     function calculateGasFees() {
         // Don't calculate if we don't have ETH price data yet
-        if (ethPrice <= 0) {
+        if (!ethPrice) {
             alert("Waiting for current ETH price data. Please try again in a moment.");
             return;
         }
@@ -102,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 gasPrices.push(gasStart + (i * gasStep));
             }
         } else {
-            // Use custom step pattern for default mode
+            // Default gas prices
             gasPrices.push(5);  // First value: 5 GWEI
             gasPrices.push(15); // Second value: 15 GWEI
             gasPrices.push(25); // Third value: 25 GWEI
@@ -114,15 +147,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Calculate and display results for each gas price
-        for (let i = 0; i < gasPrices.length; i++) {
-            const gasPrice = gasPrices[i];
+        gasPrices.forEach(gasPrice => {
+            // Calculate transaction cost in ETH
             const transactionCostWei = BigInt(gasLimit) * BigInt(gasPrice) * BigInt(1e9);
             const transactionCostEth = Number(transactionCostWei) / 1e18;
+            
+            // Calculate total cost and balance needed
             const totalCostEth = mintPrice + transactionCostEth;
-            const balanceNeeded = totalCostEth * 1.25;
+            const balanceNeeded = totalCostEth * 1.25; // 25% buffer
             const usdValue = totalCostEth * ethPrice;
             
-            // Create a row
+            // Create a row for the result
             const row = document.createElement('div');
             row.className = 'result-row';
             
@@ -142,23 +177,12 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             
             resultsContent.appendChild(row);
-        }
-    }
-
-    // Initialize
-    function init() {
-        // Initial fetch
-        fetchEthPrice();
-        fetchGasPrice();
+        });
         
-        // Set up interval for updates
-        setInterval(fetchEthPrice, 60000); // Update ETH price every minute
-        setInterval(fetchGasPrice, 15000); // Update gas price every 15 seconds
+        // Show results
+        resultsCard.classList.remove('hidden');
     }
 
-    // Event listeners - Only calculate when button is clicked
-    calculateBtn.addEventListener('click', calculateGasFees);
-    
     // Start the app
     init();
 });
