@@ -62,7 +62,7 @@
     padding: 1.5rem 0;
     position: relative;
     z-index: 2;
-    margin-bottom: 7rem; /* Increased to move content down */
+    margin-bottom: 5rem; /* Reduced to move content up */
   }
   
   .title {
@@ -74,7 +74,7 @@
     letter-spacing: 1px;
     position: absolute;
     left: 50%;
-    top: 5rem; /* Fixed position from top */
+    top: 1.5rem; /* Positioned at same height as price boxes */
     transform: translateX(-50%);
     white-space: nowrap;
     background: linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 1) 100%);
@@ -89,7 +89,7 @@
     gap: 1.5rem;
     margin-left: 2rem;
     position: absolute;
-    top: 2rem; /* Fixed position from top */
+    top: 1.5rem; /* Aligned with the title */
     left: 0;
   }
   
@@ -470,7 +470,7 @@
     .header {
       flex-direction: column;
       padding: 1rem 0;
-      margin-bottom: 9rem; /* Additional space for mobile */
+      margin-bottom: 7rem; /* Reduced from previous version */
     }
     
     .price-container {
@@ -484,7 +484,7 @@
     }
     
     .title {
-      top: 6rem; /* Adjust for mobile */
+      top: 4.5rem; /* Adjusted down to be closer to content */
     }
     
     .spacer {
@@ -527,10 +527,10 @@
     }
   
     .title {
-      top: 8rem; /* Further adjust for smaller screens */
+      top: 6rem; /* Adjusted for mobile */
     }
   
     .header {
-      margin-bottom: 11rem; /* Additional space for small mobile */
+      margin-bottom: 9rem; /* Adjusted for mobile */
     }
   }
