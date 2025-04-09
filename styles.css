@@ -74,7 +74,7 @@
     letter-spacing: 1px;
     position: absolute;
     left: 50%;
-    top: 1.5rem; /* Positioned at same height as price boxes */
+    top: 1.75rem; /* Adjusted to be more centered between top and box */
     transform: translateX(-50%);
     white-space: nowrap;
     background: linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 1) 100%);
@@ -89,7 +89,7 @@
     gap: 1.5rem;
     margin-left: 2rem;
     position: absolute;
-    top: 1.5rem; /* Aligned with the title */
+    top: 1.75rem; /* Aligned with the title */
     left: 0;
   }
   
@@ -106,7 +106,7 @@
   }
   
   .price-value-container {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     height: 24px; /* Fixed height for better alignment */
   }
@@ -124,25 +124,38 @@
     font-weight: 500;
     color: #3b82f6;
     line-height: 24px; /* Match container height */
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
   }
   
   .eth-value {
     font-family: 'Roboto Mono', monospace;
     font-weight: 500;
     line-height: 24px; /* Match container height */
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
   }
   
   .gas-unit, .eth-unit {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-secondary);
     font-size: 0.85rem;
     margin-left: 0.25rem;
-    line-height: 24px; /* Match container height */
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
   }
   
   .price-change {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.8rem;
     margin-left: 0.5rem;
-    line-height: 24px; /* Match container height */
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    vertical-align: baseline;
   }
   
   .price-change.positive {
@@ -478,13 +491,13 @@
       justify-content: center;
       margin-left: 0;
       position: absolute;
-      top: 1rem;
+      top: 1.25rem; /* Adjusted for mobile */
       left: 50%;
       transform: translateX(-50%);
     }
     
     .title {
-      top: 4.5rem; /* Adjusted down to be closer to content */
+      top: 4.75rem; /* Adjusted for better spacing on mobile */
     }
     
     .spacer {
