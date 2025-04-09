@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log('Fetching price change from CoinGecko...');
             
-            // Use the CoinGecko API with proper header authentication and all required parameters
             const options = {
                 method: 'GET',
                 headers: {
@@ -89,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             
-            // Use the exact URL that's been confirmed to work
             const response = await fetch(
                 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=true&include_last_updated_at=false&precision=0',
                 options
@@ -106,8 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ethPriceChange = data.ethereum.usd_24h_change;
                 console.log('24h price change:', ethPriceChange);
                 
-                // Update price change indicator
+                // Update price change indicator - UPDATED FORMATTING
                 const isPositive = ethPriceChange >= 0;
+                // Format with parentheses around the value and always show sign
                 ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
                 ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
                 ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');

@@ -149,8 +149,9 @@
   }
   
   .price-change {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 0.8rem;
+    font-family: 'Roboto Mono', monospace; /* Changed from Inter to Roboto Mono */
+    font-size: 0.85rem; /* Slightly increased size */
+    font-weight: normal; /* Normal weight as per ultrasound.money */
     margin-left: 0.5rem;
     display: inline-flex;
     align-items: center;
@@ -159,11 +160,18 @@
   }
   
   .price-change.positive {
-    color: #10b981; /* green */
+    color: #10b981; /* Kept the existing green */
+    opacity: 1; /* Ensure full opacity */
   }
   
   .price-change.negative {
-    color: #ef4444; /* red */
+    color: #ef4444; /* Kept the existing red */
+    opacity: 1; /* Ensure full opacity */
+  }
+
+  /* Add this style to make sure the parentheses are properly styled too */
+  .eth-price-box .price-value-container {
+    position: relative; /* Make sure the elements stack properly */
   }
   
   .spacer {
