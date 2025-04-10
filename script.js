@@ -39,6 +39,37 @@ document.addEventListener('DOMContentLoaded', () => {
         // Event listeners
         advancedToggle.addEventListener('change', toggleAdvancedSettings);
         calculateBtn.addEventListener('click', calculateGasFees);
+        
+        // Add input validation for all number inputs
+        setupInputValidation();
+    }
+    
+    // Setup validation for inputs to prevent negative values and allow proper decimal separators
+    function setupInputValidation() {
+        const numberInputs = [mintPriceInput, gasLimitInput, gasStartInput, gasStepInput, numRowsInput];
+        
+        numberInputs.forEach(input => {
+            if (!input) return; // Skip if element doesn't exist
+            
+            // Enforce minimum value of 0
+            input.min = "0";
+            
+            // Add input event listener to validate as user types
+            input.addEventListener('input', function(e) {
+                // Replace commas with periods for decimal handling
+                if (this.value.includes(',')) {
+                    this.value = this.value.replace(',', '.');
+                }
+                
+                // Parse as float to properly handle decimals
+                const value = parseFloat(this.value);
+                
+                // Check if negative and correct
+                if (value < 0) {
+                    this.value = "0";
+                }
+            });
+        });
     }
     
     // Toggle Advanced Settings
@@ -154,10 +185,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Get input values
-        const mintPrice = parseFloat(mintPriceInput.value) || 0;
-        const gasLimit = parseInt(gasLimitInput.value) || 21000;
-        const numRows = parseInt(numRowsInput.value) || 15;
+        // Get input values with proper validation
+        const mintPrice = Math.max(0, parseFloat(mintPriceInput.value) || 0);
+        const gasLimit = Math.max(21000, parseInt(gasLimitInput.value) || 21000);
+        const numRows = Math.max(5, Math.min(30, parseInt(numRowsInput.value) || 15));
+        
+        // Update input values with validated values
+        mintPriceInput.value = mintPrice;
+        gasLimitInput.value = gasLimit;
+        numRowsInput.value = numRows;
         
         // Clear previous results
         resultsContent.innerHTML = '';
@@ -167,12 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check if advanced settings are enabled
         if (advancedToggle.checked) {
-            const gasStart = parseInt(gasStartInput.value) || 10;
-            const gasStep = parseInt(gasStepInput.value) || 15;
+            // Use parseFloat instead of parseInt to support decimal values
+            const gasStart = Math.max(0, parseFloat(gasStartInput.value) || 10);
+            const gasStep = Math.max(0, parseFloat(gasStepInput.value) || 15);
+            
+            // Update input values with validated values
+            gasStartInput.value = roundToDecimalPlaces(gasStart, 5);
+            gasStepInput.value = roundToDecimalPlaces(gasStep, 5);
             
             // Generate gas prices based on advanced settings
             for (let i = 0; i < numRows; i++) {
-                gasPrices.push(gasStart + (i * gasStep));
+                // Round to 5 decimal places to prevent floating point issues
+                const gasPrice = roundToDecimalPlaces(gasStart + (i * gasStep), 5);
+                gasPrices.push(gasPrice);
             }
         } else {
             // Default gas prices
@@ -189,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate and display results for each gas price
         gasPrices.forEach(gasPrice => {
             // Calculate transaction cost in ETH
-            const transactionCostWei = BigInt(gasLimit) * BigInt(gasPrice) * BigInt(1e9);
+            const transactionCostWei = BigInt(gasLimit) * BigInt(Math.round(gasPrice * 1e9));
             const transactionCostEth = Number(transactionCostWei) / 1e18;
             
             // Calculate total cost and balance needed
@@ -203,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             row.innerHTML = `
                 <div class="result-item">
-                    <span class="gwei-badge">${gasPrice} GWEI</span>
+                    <span class="gwei-badge">${displayGweiValue(gasPrice)} GWEI</span>
                 </div>
                 <div class="result-item">
                     <span>${totalCostEth.toFixed(5)} ETH</span>
@@ -221,6 +264,31 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Show results
         resultsCard.classList.remove('hidden');
+    }
+    
+    // Helper function to round to a specific number of decimal places
+    function roundToDecimalPlaces(num, places) {
+        return Math.round(num * Math.pow(10, places)) / Math.pow(10, places);
+    }
+    
+    // Helper function to display GWEI values properly
+    function displayGweiValue(value) {
+        // For extremely small values, display up to 5 decimal places
+        if (value < 0.01) {
+            return value.toFixed(5);
+        }
+        // For small values, display up to 3 decimal places
+        else if (value < 1) {
+            return value.toFixed(3);
+        }
+        // For values between 1 and 10, display 2 decimal places
+        else if (value < 10) {
+            return value.toFixed(2);
+        }
+        // For larger values, display as integers
+        else {
+            return Math.round(value);
+        }
     }
 
     // Start the app
