@@ -218,13 +218,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 gasPrices.push(gasPrice);
             }
         } else {
-            // Default gas prices
+            // Default gas prices - UPDATED to include 10 GWEI
             gasPrices.push(5);  // First value: 5 GWEI
-            gasPrices.push(15); // Second value: 15 GWEI
-            gasPrices.push(25); // Third value: 25 GWEI
+            gasPrices.push(10); // New second value: 10 GWEI
+            gasPrices.push(15); // Third value: 15 GWEI
+            gasPrices.push(25); // Fourth value: 25 GWEI
             
             // Continue with 25 increments
-            for (let i = 1; i < numRows - 3; i++) {
+            for (let i = 1; i < numRows - 4; i++) { // Adjusted for 4 initial values instead of 3
                 gasPrices.push(25 + (i * 25));
             }
         }
@@ -271,10 +272,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.round(num * Math.pow(10, places)) / Math.pow(10, places);
     }
     
-    // Helper function to display GWEI values properly
+    // Helper function to display GWEI values properly - FIXED to handle integers
     function displayGweiValue(value) {
+        // Check if the value is actually an integer
+        if (Number.isInteger(value)) {
+            return value.toString(); // Return as integer with no decimal places
+        }
         // For extremely small values, display up to 5 decimal places
-        if (value < 0.01) {
+        else if (value < 0.01) {
             return value.toFixed(5);
         }
         // For small values, display up to 3 decimal places
@@ -285,9 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (value < 10) {
             return value.toFixed(2);
         }
-        // For larger values, display as integers
+        // For larger decimal values, display as integers
         else {
-            return Math.round(value);
+            // If very close to an integer (within 0.001), round to integer
+            if (Math.abs(Math.round(value) - value) < 0.001) {
+                return Math.round(value).toString();
+            } else {
+                return value.toFixed(2);
+            }
         }
     }
 
