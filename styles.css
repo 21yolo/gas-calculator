@@ -91,6 +91,15 @@ body {
   position: absolute;
   top: 1.75rem; /* Aligned with the title */
   left: 0;
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.price-container.hidden {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .price-box {
@@ -405,13 +414,17 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .results-header-item {
   padding: 0.5rem;
-  text-align: center; /* Changed from left to center */
+  text-align: center;
   font-size: 0.9rem;
   letter-spacing: 0.05em;
 }
 
 .results-header-item:first-child {
-  text-align: left; /* Keep the Gas Price header left-aligned */
+  text-align: left; /* Left-align the Gas Price header */
+}
+
+.results-header-item:last-child {
+  text-align: right; /* Right-align the USD Value header */
 }
 
 .results-content {
@@ -433,12 +446,16 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .result-item {
   padding: 1rem 0.5rem;
-  text-align: center; /* Changed from left to center */
+  text-align: center;
   font-family: 'Roboto Mono', monospace;
 }
 
 .result-item:first-child {
-  text-align: left; /* Keep the gas price badges left-aligned */
+  text-align: left; /* Left-align the GWEI badges */
+}
+
+.result-item:last-child {
+  text-align: right; /* Right-align the USD values */
 }
 
 .gwei-badge {

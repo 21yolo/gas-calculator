@@ -13,28 +13,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const ethPriceElement = document.getElementById('eth-price');
     const gasGweiElement = document.getElementById('gas-gwei');
     const ethPriceChangeElement = document.getElementById('eth-price-change');
+    const priceContainer = document.querySelector('.price-container');
 
     // Variables
     let ethPrice = null;
     let ethPriceChange = null;
     let gasGwei = null;
+    let initialDataLoaded = false;
     
     // Constants for API refresh rates (in milliseconds)
     const GWEI_REFRESH_RATE = 10000; // 10 seconds
     const ETH_PRICE_REFRESH_RATE = 30000; // 30 seconds
-    const PRICE_CHANGE_REFRESH_RATE = 900000; // 15 minutes
     
     // Initialize
     function init() {
+        // Hide price elements until data is loaded
+        priceContainer.classList.add('hidden');
+        
         // Initial fetch
         fetchGasPrice();
         fetchEthPrice();
-        fetchPriceChange();
         
         // Set up intervals for refreshing data with different rates
         setInterval(fetchGasPrice, GWEI_REFRESH_RATE);
         setInterval(fetchEthPrice, ETH_PRICE_REFRESH_RATE);
-        setInterval(fetchPriceChange, PRICE_CHANGE_REFRESH_RATE);
         
         // Event listeners
         advancedToggle.addEventListener('change', toggleAdvancedSettings);
@@ -81,11 +83,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Fetch ETH Price from Etherscan
+    // Function to check if both values are loaded and update display
+    function checkAndUpdateDisplay() {
+        if (ethPrice !== null && gasGwei !== null && !initialDataLoaded) {
+            // Small delay to ensure smooth transition
+            setTimeout(() => {
+                // All data is loaded, show the price container
+                priceContainer.classList.remove('hidden');
+                initialDataLoaded = true;
+            }, 500); // 0.5 second delay for smooth appearance
+        }
+    }
+    
+    // Fetch ETH Price and price change from CoinGecko
     async function fetchEthPrice() {
         try {
             const response = await fetch(
-                'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM'
+                'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=ethereum&price_change_percentage=24h'
             );
             
             if (!response.ok) {
@@ -94,68 +108,35 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             
-            if (data && data.status === "1" && data.result) {
-                ethPrice = parseFloat(data.result.ethusd);
-                
-                // Update the UI
+            if (data && data.length > 0) {
+                // Update ETH price
+                ethPrice = parseFloat(data[0].current_price);
                 ethPriceElement.textContent = Math.round(ethPrice);
-            } else {
-                console.error('Invalid response format from Etherscan ETH price:', data);
-            }
-        } catch (error) {
-            console.error('Error fetching ETH price from Etherscan:', error);
-        }
-    }
-    
-    async function fetchPriceChange() {
-        try {
-            console.log('Fetching price change from CoinGecko...');
-            
-            const options = {
-                method: 'GET',
-                headers: {
-                    'accept': 'application/json', 
-                    'x-cg-demo-api-key': 'CG-VdN9BevdKrni5bPV6TE4WTxM'
-                }
-            };
-            
-            const response = await fetch(
-                'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=true&include_last_updated_at=false&precision=0',
-                options
-            );
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('CoinGecko response:', data);
-            
-            if (data && data.ethereum && data.ethereum.usd_24h_change !== undefined) {
-                ethPriceChange = data.ethereum.usd_24h_change;
-                console.log('24h price change:', ethPriceChange);
                 
-                // Update price change indicator - UPDATED FORMATTING
+                // Update price change
+                ethPriceChange = parseFloat(data[0].price_change_percentage_24h);
+                
+                // Update price change indicator
                 const isPositive = ethPriceChange >= 0;
-                // Format with parentheses around the value and always show sign
                 ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
                 ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
                 ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');
+                
+                // Trigger display update if both values are loaded
+                checkAndUpdateDisplay();
             } else {
-                console.error('Invalid response format from CoinGecko or missing 24h change:', data);
-                ethPriceChangeElement.classList.add('hidden');
+                console.error('Invalid response format from CoinGecko:', data);
             }
         } catch (error) {
-            console.error('Error fetching price change from CoinGecko:', error);
-            ethPriceChangeElement.classList.add('hidden');
+            console.error('Error fetching ETH price from CoinGecko:', error);
         }
     }
     
-    // Fetch Gas Price from Etherscan
+    // Fetch Gas Price from Etherscan without API key
     async function fetchGasPrice() {
         try {
             const response = await fetch(
-                'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM'
+                'https://api.etherscan.io/api?module=gastracker&action=gasoracle'
             );
             
             if (!response.ok) {
@@ -167,8 +148,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && data.status === "1" && data.result) {
                 gasGwei = parseFloat(data.result.SafeGasPrice);
                 
-                // Update the UI
-                gasGweiElement.textContent = gasGwei.toFixed(2);
+                // Update the UI with 3 decimal places
+                gasGweiElement.textContent = gasGwei.toFixed(3);
+                
+                // Trigger display update if both values are loaded
+                checkAndUpdateDisplay();
             } else {
                 console.error('Invalid response format from Etherscan gas price:', data);
             }
@@ -218,14 +202,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 gasPrices.push(gasPrice);
             }
         } else {
-            // Default gas prices - UPDATED to include 10 GWEI
+            // Default gas prices
             gasPrices.push(5);  // First value: 5 GWEI
-            gasPrices.push(10); // New second value: 10 GWEI
+            gasPrices.push(10); // Second value: 10 GWEI
             gasPrices.push(15); // Third value: 15 GWEI
             gasPrices.push(25); // Fourth value: 25 GWEI
             
             // Continue with 25 increments
-            for (let i = 1; i < numRows - 4; i++) { // Adjusted for 4 initial values instead of 3
+            for (let i = 1; i < numRows - 4; i++) { // Adjusted for 4 initial values
                 gasPrices.push(25 + (i * 25));
             }
         }
@@ -272,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.round(num * Math.pow(10, places)) / Math.pow(10, places);
     }
     
-    // Helper function to display GWEI values properly - FIXED to handle integers
+    // Helper function to display GWEI values properly with updated precision
     function displayGweiValue(value) {
         // Check if the value is actually an integer
         if (Number.isInteger(value)) {
@@ -282,21 +266,21 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (value < 0.01) {
             return value.toFixed(5);
         }
-        // For small values, display up to 3 decimal places
+        // For small values, display up to 3 decimal places (updated from 3 to match requirement)
         else if (value < 1) {
             return value.toFixed(3);
         }
-        // For values between 1 and 10, display 2 decimal places
+        // For values between 1 and 10, display 3 decimal places (updated from 2 to match requirement)
         else if (value < 10) {
-            return value.toFixed(2);
+            return value.toFixed(3);
         }
-        // For larger decimal values, display as integers
+        // For larger values, adjust precision
         else {
             // If very close to an integer (within 0.001), round to integer
             if (Math.abs(Math.round(value) - value) < 0.001) {
                 return Math.round(value).toString();
             } else {
-                return value.toFixed(2);
+                return value.toFixed(3); // Updated to 3 decimal places consistently
             }
         }
     }
