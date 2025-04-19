@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Process gas data
             if (data.gas && data.gas.status === "1" && data.gas.result) {
                 gasGwei = parseFloat(data.gas.result.SafeGasPrice);
-                gasGweiElement.textContent = gasGwei.toFixed(2);
+                gasGweiElement.textContent = gasGwei.toFixed(3); // Changed from toFixed(2) to toFixed(3)
             }
             
             // Process Ethereum price data
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && data.status === "1" && data.result) {
                 gasGwei = parseFloat(data.result.SafeGasPrice);
                 
-                // Update the UI
-                gasGweiElement.textContent = gasGwei.toFixed(2);
+                // Update the UI with 3 decimal places
+                gasGweiElement.textContent = gasGwei.toFixed(3); // Changed from toFixed(2) to toFixed(3)
             } else {
                 console.error('Invalid response format from gas price API:', data);
             }
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Calculate total cost and balance needed
             const totalCostEth = mintPrice + transactionCostEth;
-            const balanceNeeded = totalCostEth * 1.25; // 25% buffer
+            const balanceNeeded = totalCostEth * 1.10; // 10% buffer (changed from 1.25)
             const usdValue = totalCostEth * ethPrice;
             
             // Create a row for the result
