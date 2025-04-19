@@ -563,3 +563,72 @@ input[type="number"]::-webkit-outer-spin-button {
     margin-bottom: 9rem; /* Adjusted for mobile */
   }
 }
+
+/* Loading state for price containers */
+.price-container.loading {
+  position: relative;
+}
+
+.price-container.loading:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(19, 27, 58, 0.7);
+  backdrop-filter: blur(3px);
+  border-radius: 8px;
+  z-index: 10;
+}
+
+.price-value-container.loading {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Loading animation */
+.price-container.loading:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin-top: -12px;
+  margin-left: -12px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+  z-index: 11;
+  animation: loading-spinner 0.8s linear infinite;
+}
+
+@keyframes loading-spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Smooth transitions for price updates */
+.gas-value, .eth-value, .price-change {
+  transition: color 0.3s ease;
+}
+
+/* Fade in animation for results */
+.results-card {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.5s forwards;
+}
+
+.results-card.hidden {
+  display: none;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

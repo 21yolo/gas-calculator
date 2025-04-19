@@ -14,27 +14,60 @@ document.addEventListener('DOMContentLoaded', () => {
     const gasGweiElement = document.getElementById('gas-gwei');
     const ethPriceChangeElement = document.getElementById('eth-price-change');
 
+    // API URL - Replace with your Cloudflare Worker URL
+    const API_BASE_URL = 'https://ethereum-gas-api-proxy.ozerovidima1234567.workers.dev';
+    
     // Variables
     let ethPrice = null;
     let ethPriceChange = null;
     let gasGwei = null;
+    let dataInitialized = false;
     
     // Constants for API refresh rates (in milliseconds)
-    const GWEI_REFRESH_RATE = 10000; // 10 seconds
-    const ETH_PRICE_REFRESH_RATE = 30000; // 30 seconds
-    const PRICE_CHANGE_REFRESH_RATE = 900000; // 15 minutes
+    const GWEI_REFRESH_RATE = 5000; // 5 seconds for gas price
+    const ETH_DATA_REFRESH_RATE = 15000; // 15 seconds for ETH price/change
+    
+    // Create loading overlay
+    function createLoadingOverlay() {
+        const headerPrices = document.querySelector('.price-container');
+        
+        // If prices are already initialized, don't show loading overlay
+        if (dataInitialized) return;
+        
+        // Add loading class to price elements
+        headerPrices.classList.add('loading');
+        
+        // Hide price values until data is loaded
+        gasGweiElement.parentElement.classList.add('loading');
+        ethPriceElement.parentElement.classList.add('loading');
+    }
+    
+    // Remove loading overlay
+    function removeLoadingOverlay() {
+        const headerPrices = document.querySelector('.price-container');
+        
+        // Remove loading class from price elements
+        headerPrices.classList.remove('loading');
+        
+        // Show price values
+        gasGweiElement.parentElement.classList.remove('loading');
+        ethPriceElement.parentElement.classList.remove('loading');
+        
+        // Mark data as initialized
+        dataInitialized = true;
+    }
     
     // Initialize
     function init() {
-        // Initial fetch
-        fetchGasPrice();
-        fetchEthPrice();
-        fetchPriceChange();
+        // Create loading overlay
+        createLoadingOverlay();
         
-        // Set up intervals for refreshing data with different rates
-        setInterval(fetchGasPrice, GWEI_REFRESH_RATE);
-        setInterval(fetchEthPrice, ETH_PRICE_REFRESH_RATE);
-        setInterval(fetchPriceChange, PRICE_CHANGE_REFRESH_RATE);
+        // Initial fetch - use the all-data endpoint for synchronized initial loading
+        fetchAllData().then(() => {
+            // Once initial data is loaded, set up individual refresh intervals
+            setInterval(fetchGasPrice, GWEI_REFRESH_RATE);
+            setInterval(fetchEthData, ETH_DATA_REFRESH_RATE);
+        });
         
         // Event listeners
         advancedToggle.addEventListener('change', toggleAdvancedSettings);
@@ -44,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupInputValidation();
     }
     
-    // Setup validation for inputs to prevent negative values and allow proper decimal separators
+    // Setup validation for inputs
     function setupInputValidation() {
         const numberInputs = [mintPriceInput, gasLimitInput, gasStartInput, gasStepInput, numRowsInput];
         
@@ -72,6 +105,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Fetch all data at once (for initial load)
+    async function fetchAllData() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/all-data`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Process gas data
+            if (data.gas && data.gas.status === "1" && data.gas.result) {
+                gasGwei = parseFloat(data.gas.result.SafeGasPrice);
+                gasGweiElement.textContent = gasGwei.toFixed(2);
+            }
+            
+            // Process Ethereum price data
+            if (data.ethereum && data.ethereum.price) {
+                // Update ETH price
+                ethPrice = data.ethereum.price;
+                ethPriceElement.textContent = Math.round(ethPrice);
+                
+                // Update price change
+                if (data.ethereum.price_change_percentage_24h !== undefined) {
+                    ethPriceChange = data.ethereum.price_change_percentage_24h;
+                    const isPositive = ethPriceChange >= 0;
+                    ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
+                    ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
+                    ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');
+                }
+            }
+            
+            // Remove loading overlay after a slight delay to ensure smooth transition
+            setTimeout(removeLoadingOverlay, 150);
+            
+        } catch (error) {
+            console.error('Error fetching initial data:', error);
+            // Remove loading overlay even if there's an error
+            removeLoadingOverlay();
+        }
+    }
+    
     // Toggle Advanced Settings
     function toggleAdvancedSettings() {
         if (advancedToggle.checked) {
@@ -81,82 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Fetch ETH Price from Etherscan
-    async function fetchEthPrice() {
-        try {
-            const response = await fetch(
-                'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM'
-            );
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data && data.status === "1" && data.result) {
-                ethPrice = parseFloat(data.result.ethusd);
-                
-                // Update the UI
-                ethPriceElement.textContent = Math.round(ethPrice);
-            } else {
-                console.error('Invalid response format from Etherscan ETH price:', data);
-            }
-        } catch (error) {
-            console.error('Error fetching ETH price from Etherscan:', error);
-        }
-    }
-    
-    async function fetchPriceChange() {
-        try {
-            console.log('Fetching price change from CoinGecko...');
-            
-            const options = {
-                method: 'GET',
-                headers: {
-                    'accept': 'application/json', 
-                    'x-cg-demo-api-key': 'CG-VdN9BevdKrni5bPV6TE4WTxM'
-                }
-            };
-            
-            const response = await fetch(
-                'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=true&include_last_updated_at=false&precision=0',
-                options
-            );
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('CoinGecko response:', data);
-            
-            if (data && data.ethereum && data.ethereum.usd_24h_change !== undefined) {
-                ethPriceChange = data.ethereum.usd_24h_change;
-                console.log('24h price change:', ethPriceChange);
-                
-                // Update price change indicator - UPDATED FORMATTING
-                const isPositive = ethPriceChange >= 0;
-                // Format with parentheses around the value and always show sign
-                ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
-                ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
-                ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');
-            } else {
-                console.error('Invalid response format from CoinGecko or missing 24h change:', data);
-                ethPriceChangeElement.classList.add('hidden');
-            }
-        } catch (error) {
-            console.error('Error fetching price change from CoinGecko:', error);
-            ethPriceChangeElement.classList.add('hidden');
-        }
-    }
-    
-    // Fetch Gas Price from Etherscan
+    // Fetch Gas Price from Worker proxy
     async function fetchGasPrice() {
+        // Don't fetch if data isn't initialized yet
+        if (!dataInitialized) return;
+        
         try {
-            const response = await fetch(
-                'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=UD78IJJMP1G7YVCVRUB8YPVTX9RTR2H5JM'
-            );
+            const response = await fetch(`${API_BASE_URL}/api/gas-price`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -170,10 +177,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update the UI
                 gasGweiElement.textContent = gasGwei.toFixed(2);
             } else {
-                console.error('Invalid response format from Etherscan gas price:', data);
+                console.error('Invalid response format from gas price API:', data);
             }
         } catch (error) {
-            console.error('Error fetching gas price from Etherscan:', error);
+            console.error('Error fetching gas price:', error);
+        }
+    }
+    
+    // Fetch ETH price and price change from Worker proxy
+    async function fetchEthData() {
+        // Don't fetch if data isn't initialized yet
+        if (!dataInitialized) return;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/eth-data`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data && data.price) {
+                // Update ETH price
+                ethPrice = data.price;
+                ethPriceElement.textContent = Math.round(ethPrice);
+                
+                // Update price change indicator if available
+                if (data.price_change_percentage_24h !== undefined) {
+                    ethPriceChange = data.price_change_percentage_24h;
+                    const isPositive = ethPriceChange >= 0;
+                    ethPriceChangeElement.textContent = `(${isPositive ? '+' : ''}${ethPriceChange.toFixed(2)}%)`;
+                    ethPriceChangeElement.classList.remove('hidden', 'positive', 'negative');
+                    ethPriceChangeElement.classList.add(isPositive ? 'positive' : 'negative');
+                }
+            } else {
+                console.error('Invalid response format from ETH data API:', data);
+            }
+        } catch (error) {
+            console.error('Error fetching ETH data:', error);
         }
     }
 
@@ -220,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Default gas prices - UPDATED to include 10 GWEI
             gasPrices.push(5);  // First value: 5 GWEI
-            gasPrices.push(10); // New second value: 10 GWEI
+            gasPrices.push(10); // Second value: 10 GWEI
             gasPrices.push(15); // Third value: 15 GWEI
             gasPrices.push(25); // Fourth value: 25 GWEI
             
@@ -272,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.round(num * Math.pow(10, places)) / Math.pow(10, places);
     }
     
-    // Helper function to display GWEI values properly - FIXED to handle integers
+    // Helper function to display GWEI values properly
     function displayGweiValue(value) {
         // Check if the value is actually an integer
         if (Number.isInteger(value)) {
