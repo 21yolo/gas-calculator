@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ethPriceChangeElement = document.getElementById('eth-price-change');
 
     // API URL - Replace with your Cloudflare Worker URL
-    const API_BASE_URL = 'https://ethereum-gas-api-proxy.ozerovdima12345678.workers.dev';
+    const API_BASE_URL = 'https://0xgas-calculator.fort-zoology-0w.workers.dev';
     
     // Variables
     let ethPrice = null;
